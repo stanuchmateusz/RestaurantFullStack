@@ -1,0 +1,35 @@
+logging:
+  level:
+    root: INFO
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+#    org.springframework.boot.autoconfigure: DEBUG
+spring:
+  application:
+    name: RestaurantApi
+  h2:
+    console:
+      enabled: true
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/restaurantapi
+    username: admin
+    password: password
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+jwt:
+  secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+  privateKey: classpath:certs\private.pem
+  publicKey: classpath:certs\public.pem
+  expiration: 86400000
+web:
+  filter:
+      cors:
+        allowed-methods=GET,POST,PUT,DELETE,ORIGIN
+        allowed-headers=Origin,Content-Type,Accept
+        allowed-origins=*
