@@ -15,5 +15,5 @@ public class AddReviewRequest {
 	private String surname;
 	private String message;
 	private String phoneNumber;
-	private long rating;
+	private float rating;
 }

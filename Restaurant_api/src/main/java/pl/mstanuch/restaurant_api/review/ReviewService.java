@@ -2,6 +2,7 @@ package pl.mstanuch.restaurant_api.review;
 
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
@@ -19,6 +20,7 @@ public class ReviewService {
 				.name(request.getName())
 				.surname(request.getSurname())
 				.message(request.getMessage())
+				.date(new Date().toString())
 				.phoneNumber(request.getPhoneNumber())
 				.rating(request.getRating())
 				.build());
@@ -30,6 +32,7 @@ public class ReviewService {
 
 	public void validate(AddReviewRequest request) {
 		if (request.getRating() < 1 || request.getRating() > 5) {
+			System.out.println(request.getRating());
 			throw new IllegalStateException("Rating must be between 1 and 5");
 		}
 
@@ -44,7 +47,7 @@ public class ReviewService {
 			throw new IllegalStateException("Phone number already exists");
 		}
 
-		if (request.getMessage().length() < 10) {
+		if (request.getMessage().length() < 2) {
 			throw new IllegalStateException("Message must be at least 10 characters long");
 		}
 

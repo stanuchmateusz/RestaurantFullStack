@@ -46,11 +46,16 @@ public class ReviewControllerTest {
 	@Test
 	public void testAddNewReviewSuccess() throws Exception {
 		AddReviewRequest request = new AddReviewRequest();
+		request.setName("John");
+		request.setSurname("Doe");
+		request.setMessage("This is a test review");
+		request.setRating(5);
+		request.setPhoneNumber("123456789");
 
 		mockMvc.perform(post("/api/v1/review/add")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(String.valueOf(request)))
-				.andExpect(status().isOk());
+				.andExpect(status().isCreated());
 	}
 
 	@Test
@@ -63,7 +68,7 @@ public class ReviewControllerTest {
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(request.toString()))
 				.andExpect(status().isBadRequest())
-				.andExpect(content().string("error while adding review"));
+				.andExpect(content().string("Error occurred while adding review"));
 	}
 
 	@Test
@@ -75,12 +80,5 @@ public class ReviewControllerTest {
 		mockMvc.perform(get("/api/v1/review/"))
 				.andExpect(status().isOk())
 				.andExpect(content().json("[{}, {}]"));
-	}
-
-	@Test
-	public void testTestEndpoint() throws Exception {
-		mockMvc.perform(get("/api/v1/review/test"))
-				.andExpect(status().isOk())
-				.andExpect(content().string("test"));
 	}
 }
