@@ -27,6 +27,18 @@ public class ReviewController {
 		}
 	}
 
+	@DeleteMapping("/delete/{phoneNumber}")
+	public ResponseEntity<?> deleteReview(@PathVariable String phoneNumber) {
+		try {
+			reviewService.deleteReview(phoneNumber);
+			return ResponseEntity.ok().build();
+		} catch (IllegalStateException e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error occurred while deleting review");
+		}
+	}
+
 	@GetMapping("/")
 	public List<Review> getAllReviews() {
 		return reviewService.getAllReviews();

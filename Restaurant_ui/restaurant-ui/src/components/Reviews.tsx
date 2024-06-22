@@ -14,28 +14,36 @@ import {
 import {useEffect, useState} from 'react';
 import {FaStar} from 'react-icons/fa';
 import ReviewService, {Review} from "../services/ReviewService";
-import {PhoneIcon} from "@chakra-ui/icons";
-import {useMessage} from "../MessageContext";
+import {MessageType, useMessage} from "../MessageContext";
+import AuthService from "../services/AuthService";
+import {DeleteIcon} from "@chakra-ui/icons";
+
 
 const Reviews = () => {
     const defaultForm: Review = {name: '', surname: '', phoneNumber: '', message: '', rating: 5};
-
+    const isModerator = AuthService.hasModeratorPermission();
     const [reviews, setReviews] = useState([defaultForm]);
     const {setMessageFunc: setMessage} = useMessage();
+    const [isPhoneNumberValid, setIsPhoneNumberValid] = useState(true);
+    const [hover, setHover] = useState(0);
+    const [form, setForm] = useState(defaultForm);
 
     useEffect(
-        () => {
-            ReviewService.getAllReviews().then(
+        () => loadReviews(),
+        []
+    )
+
+    function loadReviews() {
+
+        ReviewService.getAllReviews()
+            .then(
                 (reviews) => {
                     setReviews(reviews);
                 }
-            );
-        },
-        [reviews]
-    )
-
-    const [form, setForm] = useState(defaultForm);
-    const [hover, setHover] = useState(0);
+            ).catch(e =>
+            console.error(e)
+        );
+    }
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setForm({...form, [e.target.name]: e.target.value});
@@ -45,20 +53,55 @@ const Reviews = () => {
         setForm({...form, rating});
     };
 
+    function deleteReview(index: number) {
+        const review = reviews[index];
+        if (!review) {
+            console.error('Review not found');
+            return;
+        }
+        ReviewService.deleteReview(review.phoneNumber).then(r => {
+            if (r.status === 200) {
+                loadReviews();
+                setMessage('Review removed successfully', MessageType.INFO);
+            }
+        })
+    }
+
+    function validateForm(newReview: Review): boolean {
+        if (newReview.phoneNumber.length !== 9 || !(/^\d+$/.test(newReview.phoneNumber))) {
+            setMessage('Please enter valid phone number');
+            setIsPhoneNumberValid(false);
+            console.log(isPhoneNumberValid)
+            return false;
+        } else {
+            setIsPhoneNumberValid(true);
+            console.log(isPhoneNumberValid)
+            return true;
+        }
+    }
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const newReview: Review = {...form};
-        ReviewService.addReview(newReview)
-            .then(r => {
-                    setReviews([...reviews, r])
-                    setForm(defaultForm);
-                }
-            )
-            .catch(e => {
-                console.error(e)
-                setMessage('An error occurred during review submission: ' + e.response.data);
-            });
 
+        if (validateForm(newReview)) {
+            ReviewService.addReview(newReview)
+                .then(r => {
+                        setReviews([...reviews, newReview])
+                        setForm(defaultForm);
+                        setMessage('Review submitted successfully', MessageType.INFO);
+                    }
+                )
+                .catch(e => {
+                    console.error(e)
+                    if (e.response.data === "Phone number already exists") {
+                        setIsPhoneNumberValid(false)
+                        setMessage('Phone number already exists. Please try another one');
+                    } else {
+                        setMessage('An error occurred during review submission: ' + e.response.data);
+                    }
+                });
+        }
     };
 
     return (
@@ -67,21 +110,44 @@ const Reviews = () => {
                 Reviews
             </Heading>
             <VStack spacing={4} align="stretch">
-                {reviews.map((review, index) => (
-                    <Box key={index} p={4} borderWidth="1px" borderRadius="lg" shadow="md">
-                        <HStack spacing={2}>
-                            {Array(5)
-                                .fill('')
-                                .map((_, i) => (
-                                    <Icon key={i} as={FaStar} color={i < review.rating ? 'yellow.400' : 'gray.300'}/>
-                                ))}
-                        </HStack>
-                        <Text fontSize="lg" fontWeight="bold">
-                            {review.name} {review.surname}
-                        </Text>
-                        <Text>{review.message}</Text>
-                    </Box>
-                ))}
+                {reviews.length === 1 && reviews[0].message === "" ? <Text>No reviews yet</Text> : <></>}
+                {reviews.length > 0 && reviews[0].message !== "" &&
+                    reviews.map((review, index) => (
+                        <Box key={index} p={4} borderWidth="1px" borderRadius="lg" shadow="md" width="full" mb={4}>
+                            <HStack spacing={4} justifyContent="space-between" alignItems="center">
+                                <Box flex="1">
+
+                                    <Text fontSize="lg" fontWeight="bold">
+                                        {review.name} {review.surname}
+                                    </Text>
+                                    <Text>{review.message}</Text>
+                                    <HStack spacing={2} marginY={2}>
+                                        {Array(5)
+                                            .fill('')
+                                            .map((_, i) => (
+                                                <Icon key={i} as={FaStar}
+                                                      color={i < review.rating ? 'yellow.400' : 'gray.300'}/>
+                                            ))}
+                                    </HStack>
+                                </Box>
+                                {isModerator &&
+                                    <Box
+                                        as="button"
+                                        p={2}
+                                        borderRadius="md"
+                                        bg="transparent"
+                                        _hover={{bg: "red.100"}}
+                                        _active={{bg: 'red.200'}}
+                                        onClick={() => deleteReview(index)}
+                                    >
+                                        <DeleteIcon color="red.500"/>
+                                    </Box>
+                                }
+                            </HStack>
+                        </Box>
+
+                    ))}
+
             </VStack>
             <Box mt={8}>
                 <Heading as="h3" size="lg" mb={4}>
@@ -106,10 +172,10 @@ const Reviews = () => {
                             />
                             <InputGroup>
                                 <InputLeftElement pointerEvents='none'>
-                                    <PhoneIcon color='gray.300'/>
+                                    +48
                                 </InputLeftElement>
                                 <Input name="phoneNumber" placeholder='Phone number' value={form.phoneNumber}
-                                       onChange={handleChange} required/>
+                                       onChange={handleChange} isInvalid={!isPhoneNumberValid} required/>
                             </InputGroup>
 
                         </HStack>

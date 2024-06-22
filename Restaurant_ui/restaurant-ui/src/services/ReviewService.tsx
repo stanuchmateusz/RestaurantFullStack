@@ -3,6 +3,7 @@ import axios from "axios";
 const API_URL = process.env.REACT_APP_API_URL as string;
 const ADD_REVIEW_URL = `${API_URL}review/add`
 const GET_ALL_REVIEWS_URL = `${API_URL}review/`
+const DELETE_REVIEW_URL = `${API_URL}review/delete/`
 
 export interface Review {
     name: string;
@@ -32,6 +33,12 @@ class ReviewService {
         return response.then((response) => {
             return response.data as Review[]
         });
+    }
+
+    async deleteReview(phoneNumber: string): Promise<any> {
+        return axios.delete(
+            `${DELETE_REVIEW_URL}${phoneNumber}`
+        )
     }
 }
 

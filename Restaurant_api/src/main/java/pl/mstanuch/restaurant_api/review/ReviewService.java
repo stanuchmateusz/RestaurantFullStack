@@ -1,12 +1,14 @@
 package pl.mstanuch.restaurant_api.review;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
 @Service
+@Transactional
 public class ReviewService {
 
 	private final ReviewRepository repository;
@@ -28,6 +30,13 @@ public class ReviewService {
 
 	public List<Review> getAllReviews() {
 		return StreamSupport.stream(repository.findAll().spliterator(), false).toList();
+	}
+
+	public void deleteReview(String phoneNumber) {
+		if (repository.findByPhoneNumber(phoneNumber).isEmpty()) {
+			throw new IllegalStateException("Review not found");
+		}
+		repository.deleteByPhoneNumber(phoneNumber);
 	}
 
 	public void validate(AddReviewRequest request) {
@@ -62,7 +71,5 @@ public class ReviewService {
 		if (request.getSurname().length() < 2) {
 			throw new IllegalStateException("Surname must be at least 2 characters long");
 		}
-
-
 	}
 }
